@@ -1,7 +1,8 @@
+import { Context } from '../common/context';
 import { SurfZone } from '../models/surfZone';
 import { SurfZoneProperties } from '../models/surfZoneProperties';
 import { SurfZoneRepository } from '../respository/surfZoneRepository';
-import { ServiceCodes } from './serviceCodes';
+import { ServiceCode } from './serviceCodes';
 
 export class SurfZoneService {
   private repository: SurfZoneRepository;
@@ -10,21 +11,24 @@ export class SurfZoneService {
     this.repository = repository;
   }
 
-  public async getEarthZone(): Promise<SurfZone> {
-    return this.repository.getEarthZone();
+  public async getEarthZone(ctx: Context): Promise<SurfZone> {
+    return this.repository.getEarthZone(ctx);
   }
 
-  public async getSurfZone(id: string): Promise<SurfZone> {
-    const zone = await this.repository.getSurfZone(id);
+  public async getSurfZone(ctx: Context, id: string): Promise<SurfZone> {
+    const zone = await this.repository.getSurfZone(ctx, id);
 
     if (zone === undefined) {
-      return Promise.reject({ code: ServiceCodes.NOT_FOUND });
+      return Promise.reject({ code: ServiceCode.NOT_FOUND });
     }
 
     return zone;
   }
 
-  public async addSurfZone(properties: SurfZoneProperties): Promise<SurfZone> {
-    return this.addSurfZone(properties);
+  public async addSurfZone(
+    ctx: Context,
+    properties: SurfZoneProperties
+  ): Promise<SurfZone> {
+    return this.repository.addSurfZone(ctx, properties);
   }
 }
