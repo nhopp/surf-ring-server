@@ -18,6 +18,7 @@ describe('SurfZoneRepositoryMongo', async () => {
   beforeEach(async () => {
     mongoMem = new MongoMemoryServer();
     const mongoUri = await mongoMem.getUri('db');
+    console.log(mongoUri);
     mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true });
     await mongoClient.connect();
     mongoDb = mongoClient.db();
@@ -122,6 +123,25 @@ describe('SurfZoneRepositoryMongo', async () => {
       const foundZone = await repository.getSurfZone(ctx, zone.id);
 
       expect(foundZone).to.be.deep.eq(zone);
+    });
+  });
+
+  describe('getEarth', () => {
+    it('no earth found returns NOT_FOUND', async () => {
+      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const error = await repository.getEarthZone(ctx).catch((err) => err);
+      expect(error).to.be.deep.eq({ code: RepositoryCode.NOT_FOUND });
+    });
+
+    it('happyPath', async () => {
+      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const earthAdded = await repository.addSurfZone(
+        ctx,
+        new SurfZoneProperties('earth', [], [])
+      );
+      const earthFound = await repository.getEarthZone(ctx).catch((err) => err);
+
+      expect(earthFound).to.be.deep.eq(earthAdded);
     });
   });
 });

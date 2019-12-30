@@ -7,15 +7,25 @@ import { SurfZoneProperties } from '../models/surfZoneProperties';
 import { SurfZoneRepository } from './surfZoneRepository';
 
 export class SurfZoneRepositoryMongo implements SurfZoneRepository {
+  private static earthZoneName = 'earth';
   private static collectionName = 'surfZones';
+
   private collection: Collection;
 
   constructor(db: Db) {
     this.collection = db.collection(SurfZoneRepositoryMongo.collectionName);
   }
 
-  public getEarthZone(ctx: Context): Promise<SurfZone> {
-    throw new Error('Method not implemented.');
+  public async getEarthZone(ctx: Context): Promise<SurfZone> {
+    const earthBson = await this.collection.findOne({
+      name: SurfZoneRepositoryMongo.earthZoneName
+    });
+
+    if (earthBson === null) {
+      return Promise.reject({ code: RepositoryCode.NOT_FOUND });
+    }
+
+    return this.surfZoneFromBson(earthBson);
   }
 
   public async addSurfZone(
@@ -45,16 +55,20 @@ export class SurfZoneRepositoryMongo implements SurfZoneRepository {
       ctx.logger.error(`invalid objectId=${error}`);
       return Promise.reject({ code: RepositoryCode.INVALID_ID });
     }
-    const zone = await this.collection.findOne({ _id: objectId });
+    const zoneBson = await this.collection.findOne({ _id: objectId });
 
-    if (zone === null) {
+    if (zoneBson === null) {
       ctx.logger.error(`could not find surfZone id=${id}`);
       return Promise.reject({ code: RepositoryCode.NOT_FOUND });
     }
 
+    return this.surfZoneFromBson(zoneBson);
+  }
+
+  private surfZoneFromBson(zoneBson: any): SurfZone {
     return new SurfZone(
-      zone._id.toHexString(),
-      new SurfZoneProperties(zone.name, zone.zones, zone.spots)
+      zoneBson._id.toHexString(),
+      new SurfZoneProperties(zoneBson.name, zoneBson.zones, zoneBson.spots)
     );
   }
 }
