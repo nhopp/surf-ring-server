@@ -4,28 +4,16 @@ import { RepositoryCode } from '../../tests/repositories/repositoryCodes';
 import { Context } from '../common/context';
 import { SurfZone } from '../models/surfZone';
 import { SurfZoneProperties } from '../models/surfZoneProperties';
+import { MongoHelper } from './mongoHelper';
 import { SurfZoneRepository } from './surfZoneRepository';
 
 export class SurfZoneRepositoryMongo implements SurfZoneRepository {
-  private static earthZoneName = 'earth';
   private static collectionName = 'surfZones';
 
   private collection: Collection;
 
   constructor(db: Db) {
     this.collection = db.collection(SurfZoneRepositoryMongo.collectionName);
-  }
-
-  public async getEarthZone(ctx: Context): Promise<SurfZone> {
-    const earthBson = await this.collection.findOne({
-      name: SurfZoneRepositoryMongo.earthZoneName
-    });
-
-    if (earthBson === null) {
-      return Promise.reject({ code: RepositoryCode.NOT_FOUND });
-    }
-
-    return this.surfZoneFromBson(earthBson);
   }
 
   public async addSurfZone(
@@ -62,13 +50,6 @@ export class SurfZoneRepositoryMongo implements SurfZoneRepository {
       return Promise.reject({ code: RepositoryCode.NOT_FOUND });
     }
 
-    return this.surfZoneFromBson(zoneBson);
-  }
-
-  private surfZoneFromBson(zoneBson: any): SurfZone {
-    return new SurfZone(
-      zoneBson._id.toHexString(),
-      new SurfZoneProperties(zoneBson.name, zoneBson.zones, zoneBson.spots)
-    );
+    return MongoHelper.surfZoneFromBson(zoneBson);
   }
 }

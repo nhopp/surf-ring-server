@@ -11,10 +11,6 @@ export class SurfZoneService {
     this.repository = repository;
   }
 
-  public async getEarthZone(ctx: Context): Promise<SurfZone> {
-    return this.repository.getEarthZone(ctx);
-  }
-
   public async getSurfZone(ctx: Context, id: string): Promise<SurfZone> {
     const zone = await this.repository.getSurfZone(ctx, id);
 

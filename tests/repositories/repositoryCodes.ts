@@ -1,4 +1,6 @@
 export enum RepositoryCode {
-  INVALID_ID,
-  NOT_FOUND
+  OK = 'OK',
+  DUPLICATE_ENTRY = 'DUPLICATE_ENTRY',
+  INVALID_ID = 'INVALID_ID',
+  NOT_FOUND = 'NOT_FOUND'
 }

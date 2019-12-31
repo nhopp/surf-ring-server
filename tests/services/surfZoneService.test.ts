@@ -20,16 +20,6 @@ describe('SurfZoneService', () => {
   });
 
   describe('getSurfZone', () => {
-    it('get earth returns zone', async () => {
-      const earth = { id: 'earth_id', name: 'earth', zones: [], spots: [] };
-      const stub = Sinon.stub(repository, 'getEarthZone').resolves(earth);
-
-      const surfZone = await service.getEarthZone(ctx);
-
-      expect(stub.calledOnce).to.equal(true);
-      expect(surfZone).to.deep.eq(earth);
-    });
-
     it('get with invalid id returns NOT_FOUND error', async () => {
       const stub = Sinon.stub(repository, 'getSurfZone').resolves(undefined);
 
