@@ -4,10 +4,10 @@ import { Db, MongoClient } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { ContextImp } from '../../src/common/context';
+import { InvalidSurfZoneError } from '../../src/errors/errors';
 import { SurfZoneProperties } from '../../src/models/surfZoneProperties';
 import { SurfZoneRepositoryMongo } from '../../src/respository/surfZoneRepositoryMongo';
 import { MockLogger } from '../mocks/mockLogger';
-import { RepositoryCode } from './repositoryCodes';
 
 describe('SurfZoneRepositoryMongo', async () => {
   const ctx = new ContextImp(new MockLogger());
@@ -69,41 +69,30 @@ describe('SurfZoneRepositoryMongo', async () => {
       expect(parentZone.id).to.not.eq('');
     });
 
-    it('zone with invalid child zone id rejects INVALID_ID', async () => {
+    it('zone with invalid child zone id rejects InvalidSurfZoneError', async () => {
       const repository = new SurfZoneRepositoryMongo(mongoDb);
       const zoneName = faker.name.findName();
-      const missingId = faker.random.word();
+      const invalidId = 'invalid_id';
 
       const error = await repository
-        .addSurfZone(ctx, new SurfZoneProperties(zoneName, [missingId], []))
+        .addSurfZone(ctx, new SurfZoneProperties(zoneName, [invalidId], []))
         .catch((err) => err);
 
-      expect(error).to.be.deep.eq({ code: RepositoryCode.INVALID_ID });
-    });
-
-    it('zone with empty child zone id rejects INVALID_ID', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
-      const zoneName = faker.name.findName();
-
-      const error = await repository
-        .addSurfZone(ctx, new SurfZoneProperties(zoneName, [''], []))
-        .catch((err) => err);
-
-      expect(error).to.be.deep.eq({ code: RepositoryCode.INVALID_ID });
+      expect(error).to.be.an.instanceOf(InvalidSurfZoneError);
     });
   });
 
   describe('getSurfZone', () => {
-    it('empty string id rejects with INVALID_ID', async () => {
+    it('empty string id rejects with InvalidSurfZoneError', async () => {
       const repository = new SurfZoneRepositoryMongo(mongoDb);
       const error = await repository.getSurfZone(ctx, '').catch((err) => {
         return err;
       });
 
-      expect(error).to.be.deep.eq({ code: RepositoryCode.INVALID_ID });
+      expect(error).to.be.an.instanceOf(InvalidSurfZoneError);
     });
 
-    it('missing id rejects with NOT_FOUND', async () => {
+    it('missing id rejects with InvalidSurfZoneError', async () => {
       const repository = new SurfZoneRepositoryMongo(mongoDb);
       const error = await repository
         .getSurfZone(ctx, '5e09258d70a7f254196660b3')
@@ -111,7 +100,7 @@ describe('SurfZoneRepositoryMongo', async () => {
           return err;
         });
 
-      expect(error).to.be.deep.eq({ code: RepositoryCode.NOT_FOUND });
+      expect(error).to.be.an.instanceOf(InvalidSurfZoneError);
     });
 
     it('happyPath', async () => {

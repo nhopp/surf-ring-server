@@ -55,12 +55,30 @@ describe('EarthService', () => {
 
     it('double addEarth rejects BAD_REQUEST', async () => {
       const earth = { id: 'id', name: 'earth', zones: [], spots: [] };
-      const stub = Sinon.stub(repository, 'addEarth').resolves(earth);
+      const stub = Sinon.stub(repository, 'addEarth').rejects({
+        code: RepositoryCode.DUPLICATE_ENTRY
+      });
 
-      await service.addEarth(ctx, earth);
       const error = await service.addEarth(ctx, earth).catch((err) => err);
 
-      expect(stub.calledTwice).to.equal(true);
+      expect(stub.calledOnce).to.equal(true);
+      expect(error).to.deep.eq({ code: ServiceCode.BAD_REQUEST });
+    });
+
+    it('invalid surfZone child rejects BAD_REQUEST', async () => {
+      const earth = {
+        id: 'id',
+        name: 'earth',
+        zones: ['invalid_id'],
+        spots: []
+      };
+      const stub = Sinon.stub(repository, 'addEarth').rejects({
+        code: RepositoryCode.INVALID_ID
+      });
+
+      const error = await service.addEarth(ctx, earth).catch((err) => err);
+
+      expect(stub.calledOnce).to.equal(true);
       expect(error).to.deep.eq({ code: ServiceCode.BAD_REQUEST });
     });
   });

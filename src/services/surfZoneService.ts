@@ -1,8 +1,8 @@
 import { Context } from '../common/context';
+import { InvalidSurfZoneError } from '../errors/errors';
 import { SurfZone } from '../models/surfZone';
 import { SurfZoneProperties } from '../models/surfZoneProperties';
 import { SurfZoneRepository } from '../respository/surfZoneRepository';
-import { ServiceCode } from './serviceCodes';
 
 export class SurfZoneService {
   private repository: SurfZoneRepository;
@@ -15,7 +15,7 @@ export class SurfZoneService {
     const zone = await this.repository.getSurfZone(ctx, id);
 
     if (zone === undefined) {
-      return Promise.reject({ code: ServiceCode.NOT_FOUND });
+      return Promise.reject(new InvalidSurfZoneError(id));
     }
 
     return zone;

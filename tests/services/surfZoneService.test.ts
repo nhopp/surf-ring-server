@@ -2,10 +2,9 @@ import { expect } from 'chai';
 import * as Sinon from 'sinon';
 
 import { ContextImp } from '../../src/common/context';
+import { InvalidSurfZoneError } from '../../src/errors/errors';
 import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
-import { ServiceCode } from '../../src/services/serviceCodes';
 import { SurfZoneService } from '../../src/services/surfZoneService';
-import { MockData } from '../data/mockData';
 import { MockLogger } from '../mocks/mockLogger';
 import { MockSurfZoneRepository } from '../mocks/mockSurfZoneRepository';
 
@@ -28,7 +27,7 @@ describe('SurfZoneService', () => {
         .catch((err) => err);
 
       expect(stub.calledOnce).to.equal(true);
-      expect(surfZoneError).to.deep.eq({ code: ServiceCode.NOT_FOUND });
+      expect(surfZoneError).to.be.an.instanceOf(InvalidSurfZoneError);
     });
 
     it('get with valid id returns surfZone', async () => {
@@ -36,7 +35,7 @@ describe('SurfZoneService', () => {
       const zone = { id: zoneId, name: '', zones: [], spots: [] };
       const stub = Sinon.stub(repository, 'getSurfZone').resolves(zone);
 
-      const surfZone = await service.getSurfZone(ctx, MockData.surfZoneKey);
+      const surfZone = await service.getSurfZone(ctx, zoneId);
       expect(stub.calledOnce).to.equal(true);
       expect(surfZone).to.deep.eq(zone);
     });

@@ -1,7 +1,7 @@
 import { Collection, Db, ObjectID } from 'mongodb';
 
-import { RepositoryCode } from '../../tests/repositories/repositoryCodes';
 import { Context } from '../common/context';
+import { InvalidSurfZoneError } from '../errors/errors';
 import { SurfZone } from '../models/surfZone';
 import { SurfZoneProperties } from '../models/surfZoneProperties';
 import { MongoHelper } from './mongoHelper';
@@ -25,7 +25,7 @@ export class SurfZoneRepositoryMongo implements SurfZoneRepository {
         await this.getSurfZone(ctx, zoneId);
       } catch (err) {
         ctx.logger.error(`surfZone child does not exist id=${zoneId}`);
-        return Promise.reject({ code: RepositoryCode.INVALID_ID });
+        return Promise.reject(new InvalidSurfZoneError(zoneId));
       }
     }
 
@@ -41,13 +41,14 @@ export class SurfZoneRepositoryMongo implements SurfZoneRepository {
       objectId = new ObjectID(id);
     } catch (error) {
       ctx.logger.error(`invalid objectId=${error}`);
-      return Promise.reject({ code: RepositoryCode.INVALID_ID });
+      return Promise.reject(new InvalidSurfZoneError(id));
     }
+
     const zoneBson = await this.collection.findOne({ _id: objectId });
 
     if (zoneBson === null) {
       ctx.logger.error(`could not find surfZone id=${id}`);
-      return Promise.reject({ code: RepositoryCode.NOT_FOUND });
+      return Promise.reject(new InvalidSurfZoneError(id));
     }
 
     return MongoHelper.surfZoneFromBson(zoneBson);
