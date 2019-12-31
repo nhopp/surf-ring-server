@@ -4,16 +4,16 @@ import { Db, MongoClient } from 'mongodb';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { ContextImp } from '../../src/common/context';
+import { NotFoundError } from '../../src/errors/errors';
 import { SurfZone } from '../../src/models/surfZone';
 import { SurfZoneProperties } from '../../src/models/surfZoneProperties';
-import { EarthRepositoryMongo } from '../../src/respository/earthRepositoryMongo';
+import { EarthRepository } from '../../src/respository/earthRepository';
+import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { MockLogger } from '../mocks/mockLogger';
-import { MockSurfZoneRepository } from '../mocks/mockSurfZoneRepository';
-import { RepositoryCode } from './repositoryCodes';
 
 describe('earthZoneRepository', () => {
   const ctx = new ContextImp(new MockLogger());
-  const surfZoneRepository = new MockSurfZoneRepository();
+  let surfZoneRepository: SurfZoneRepository;
   let mongoMem: MongoMemoryServer;
   let mongoClient: MongoClient;
   let mongoDb: Db;
@@ -24,6 +24,7 @@ describe('earthZoneRepository', () => {
     mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true });
     await mongoClient.connect();
     mongoDb = mongoClient.db();
+    surfZoneRepository = new SurfZoneRepository(mongoDb);
   });
 
   afterEach(async () => {
@@ -33,7 +34,7 @@ describe('earthZoneRepository', () => {
 
   describe('addEarth', () => {
     it('happyPath', async () => {
-      const repository = new EarthRepositoryMongo(mongoDb, surfZoneRepository);
+      const repository = new EarthRepository(mongoDb, surfZoneRepository);
       const earthName = faker.name.findName();
 
       const zone = await repository.addEarth(
@@ -43,30 +44,17 @@ describe('earthZoneRepository', () => {
 
       expect(zone).to.be.instanceOf(SurfZone);
     });
-
-    it('second addEarth rejects DUPLICATE_ENTRY', async () => {
-      const repository = new EarthRepositoryMongo(mongoDb, surfZoneRepository);
-      const earthName = faker.name.findName();
-      const properties = new SurfZoneProperties(earthName, [], []);
-
-      await repository.addEarth(ctx, properties);
-      const error = await repository
-        .addEarth(ctx, properties)
-        .catch((err) => err);
-
-      expect(error).to.be.deep.eq({ code: RepositoryCode.DUPLICATE_ENTRY });
-    });
   });
 
   describe('getEarth', () => {
-    it('no earth found returns NOT_FOUND', async () => {
-      const repository = new EarthRepositoryMongo(mongoDb, surfZoneRepository);
+    it('no earth found rejects NotFoundError', async () => {
+      const repository = new EarthRepository(mongoDb, surfZoneRepository);
       const error = await repository.getEarth(ctx).catch((err) => err);
-      expect(error).to.be.deep.eq({ code: RepositoryCode.NOT_FOUND });
+      expect(error).to.be.an.instanceOf(NotFoundError);
     });
 
     it('happyPath', async () => {
-      const repository = new EarthRepositoryMongo(mongoDb, surfZoneRepository);
+      const repository = new EarthRepository(mongoDb, surfZoneRepository);
       const earthName = faker.name.findName();
       const earthAdded = await repository.addEarth(
         ctx,

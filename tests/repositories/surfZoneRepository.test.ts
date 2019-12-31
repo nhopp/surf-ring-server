@@ -6,7 +6,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { ContextImp } from '../../src/common/context';
 import { InvalidSurfZoneError } from '../../src/errors/errors';
 import { SurfZoneProperties } from '../../src/models/surfZoneProperties';
-import { SurfZoneRepositoryMongo } from '../../src/respository/surfZoneRepositoryMongo';
+import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { MockLogger } from '../mocks/mockLogger';
 
 describe('SurfZoneRepositoryMongo', async () => {
@@ -30,7 +30,7 @@ describe('SurfZoneRepositoryMongo', async () => {
 
   describe('addSurfZone', async () => {
     it('zone with no sub zones or children', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const repository = new SurfZoneRepository(mongoDb);
       const zoneName = 'newZoneName';
       const zones: [] = [];
       const spots: [] = [];
@@ -48,7 +48,7 @@ describe('SurfZoneRepositoryMongo', async () => {
     });
 
     it('zone with valid child zone id', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const repository = new SurfZoneRepository(mongoDb);
       const zoneName = faker.name.findName();
 
       const childZone = await repository.addSurfZone(
@@ -70,7 +70,7 @@ describe('SurfZoneRepositoryMongo', async () => {
     });
 
     it('zone with invalid child zone id rejects InvalidSurfZoneError', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const repository = new SurfZoneRepository(mongoDb);
       const zoneName = faker.name.findName();
       const invalidId = 'invalid_id';
 
@@ -84,7 +84,7 @@ describe('SurfZoneRepositoryMongo', async () => {
 
   describe('getSurfZone', () => {
     it('empty string id rejects with InvalidSurfZoneError', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const repository = new SurfZoneRepository(mongoDb);
       const error = await repository.getSurfZone(ctx, '').catch((err) => {
         return err;
       });
@@ -93,7 +93,7 @@ describe('SurfZoneRepositoryMongo', async () => {
     });
 
     it('missing id rejects with InvalidSurfZoneError', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const repository = new SurfZoneRepository(mongoDb);
       const error = await repository
         .getSurfZone(ctx, '5e09258d70a7f254196660b3')
         .catch((err) => {
@@ -104,7 +104,7 @@ describe('SurfZoneRepositoryMongo', async () => {
     });
 
     it('happyPath', async () => {
-      const repository = new SurfZoneRepositoryMongo(mongoDb);
+      const repository = new SurfZoneRepository(mongoDb);
       const zoneName = faker.name.findName();
       const properties = new SurfZoneProperties(zoneName, [], []);
       const zone = await repository.addSurfZone(ctx, properties);

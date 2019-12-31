@@ -3,22 +3,19 @@ import * as HttpStatus from 'http-status-codes';
 
 import { ContextImp } from '../common/context';
 import { Logger } from '../common/logger';
-import { InvalidSurfZoneError } from '../errors/errors';
-import { SurfZoneService } from '../services/surfZoneService';
+import { DuplicateEntryError, InvalidSurfZoneError, NotFoundError } from '../errors/errors';
+import { EarthService } from '../services/earthService';
 import { Controller } from './controller';
 
-export class SurfZonesController implements Controller {
+export class EarthController implements Controller {
   public readonly router = express.Router();
 
-  constructor(
-    private logger: Logger,
-    private surfZoneService: SurfZoneService
-  ) {
-    this.router.get('/surf-zones/:id', this.getSurfZone.bind(this));
-    this.router.post('/surf-zones', this.postSurfZone.bind(this));
+  constructor(private logger: Logger, private earthService: EarthService) {
+    this.router.get('/earth', this.getEarth.bind(this));
+    this.router.post('/earth', this.postEarth.bind(this));
   }
 
-  private async getSurfZone(
+  private async getEarth(
     request: express.Request,
     response: express.Response,
     next: express.NextFunction
@@ -26,10 +23,10 @@ export class SurfZonesController implements Controller {
     const id = request.params.id;
     const context = new ContextImp(this.logger);
     try {
-      const surfZone = await this.surfZoneService.getSurfZone(context, id);
-      response.json(surfZone);
+      const earth = await this.earthService.getEarth(context);
+      response.json(earth);
     } catch (err) {
-      if (err instanceof InvalidSurfZoneError) {
+      if (err instanceof NotFoundError) {
         response.status(HttpStatus.NOT_FOUND).send({ message: err.message });
       } else {
         next(err);
@@ -37,7 +34,7 @@ export class SurfZonesController implements Controller {
     }
   }
 
-  private async postSurfZone(
+  private async postEarth(
     request: express.Request,
     response: express.Response,
     next: express.NextFunction
@@ -45,13 +42,12 @@ export class SurfZonesController implements Controller {
     const properties = request.body;
     const context = new ContextImp(this.logger);
     try {
-      const surfZone = await this.surfZoneService.addSurfZone(
-        context,
-        properties
-      );
-      response.status(HttpStatus.CREATED).json(surfZone);
+      const earth = await this.earthService.addEarth(context, properties);
+      response.status(HttpStatus.CREATED).json(earth);
     } catch (err) {
       if (err instanceof InvalidSurfZoneError) {
+        response.status(HttpStatus.CONFLICT).send({ message: err.message });
+      } else if (err instanceof DuplicateEntryError) {
         response.status(HttpStatus.CONFLICT).send({ message: err.message });
       } else {
         return next(err);

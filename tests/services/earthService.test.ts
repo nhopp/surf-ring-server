@@ -1,85 +1,88 @@
 import { expect } from 'chai';
-import * as Sinon from 'sinon';
+import { MongoClient } from 'mongodb';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { ContextImp } from '../../src/common/context';
+import { DuplicateEntryError, InvalidSurfZoneError, NotFoundError } from '../../src/errors/errors';
 import { EarthRepository } from '../../src/respository/earthRepository';
+import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { EarthService } from '../../src/services/earthService';
-import { ServiceCode } from '../../src/services/serviceCodes';
-import { MockEarthRepository } from '../mocks/mockEarthRepository';
 import { MockLogger } from '../mocks/mockLogger';
-import { RepositoryCode } from '../repositories/repositoryCodes';
 
 describe('EarthService', () => {
   const ctx = new ContextImp(new MockLogger());
   let repository: EarthRepository;
   let service: EarthService;
+  let mongoClient: MongoClient;
+  let mongoMem: MongoMemoryServer;
 
-  beforeEach(() => {
-    repository = new MockEarthRepository();
+  beforeEach(async () => {
+    mongoMem = new MongoMemoryServer();
+    const mongoUri = await mongoMem.getUri('db');
+    mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true });
+    await mongoClient.connect();
+    const mongoDb = mongoClient.db();
+    const surfZoneRepository = new SurfZoneRepository(mongoDb);
+
+    repository = new EarthRepository(mongoDb, surfZoneRepository);
     service = new EarthService(repository);
+  });
+
+  afterEach(async () => {
+    await mongoClient.close();
+    await mongoMem.stop();
   });
 
   describe('getEarth', () => {
     it('happyPath', async () => {
-      const earth = { id: 'earth_id', name: 'earth', zones: [], spots: [] };
-      const stub = Sinon.stub(repository, 'getEarth').resolves(earth);
+      const earthProps = { name: 'earth', zones: [], spots: [] };
+      const createdEarth = await service.addEarth(ctx, earthProps);
+      const foundEarth = await service.getEarth(ctx);
 
-      const surfZone = await service.getEarth(ctx);
-
-      expect(stub.calledOnce).to.equal(true);
-      expect(surfZone).to.deep.eq(earth);
+      expect(foundEarth).to.deep.eq(createdEarth);
     });
 
-    it('no earth rejects NOT_FOUND', async () => {
-      const stub = Sinon.stub(repository, 'getEarth').rejects({
-        code: RepositoryCode.NOT_FOUND
-      });
-
+    it('no earth rejects NotFoundError', async () => {
       const error = await service.getEarth(ctx).catch((err) => err);
-
-      expect(stub.calledOnce).to.equal(true);
-      expect(error).to.deep.eq({ code: ServiceCode.NOT_FOUND });
+      expect(error).to.be.an.instanceOf(NotFoundError);
     });
   });
 
   describe('addEarth', () => {
     it('happyPath', async () => {
-      const earth = { id: 'id', name: 'earth', zones: [], spots: [] };
-      const stub = Sinon.stub(repository, 'addEarth').resolves(earth);
+      const earthName = 'earth';
+      const earthProps = { name: earthName, zones: [], spots: [] };
 
-      const addedEarth = await service.addEarth(ctx, earth);
+      const addedEarth = await service.addEarth(ctx, earthProps);
 
-      expect(stub.calledOnce).to.equal(true);
-      expect(addedEarth).to.deep.eq(earth);
+      expect(addedEarth.id).to.not.eq(undefined);
+      expect(addedEarth.name).to.be.eq(earthName);
+      expect(addedEarth.zones).to.be.deep.eq([]);
+      expect(addedEarth.spots).to.be.deep.eq([]);
     });
 
-    it('double addEarth rejects BAD_REQUEST', async () => {
-      const earth = { id: 'id', name: 'earth', zones: [], spots: [] };
-      const stub = Sinon.stub(repository, 'addEarth').rejects({
-        code: RepositoryCode.DUPLICATE_ENTRY
-      });
+    it('double addEarth rejects DuplicateEntryError', async () => {
+      const earthPropsOne = { name: 'earth', zones: [], spots: [] };
+      const earthPropsTwo = { name: 'earth', zones: [], spots: [] };
 
-      const error = await service.addEarth(ctx, earth).catch((err) => err);
+      await service.addEarth(ctx, earthPropsOne);
+      const error = await service
+        .addEarth(ctx, earthPropsTwo)
+        .catch((err) => err);
 
-      expect(stub.calledOnce).to.equal(true);
-      expect(error).to.deep.eq({ code: ServiceCode.BAD_REQUEST });
+      expect(error).to.be.an.instanceOf(DuplicateEntryError);
     });
 
-    it('invalid surfZone child rejects BAD_REQUEST', async () => {
-      const earth = {
-        id: 'id',
+    it('invalid surfZone child rejects InvalidSurfZoneError', async () => {
+      const earthProps = {
         name: 'earth',
         zones: ['invalid_id'],
         spots: []
       };
-      const stub = Sinon.stub(repository, 'addEarth').rejects({
-        code: RepositoryCode.INVALID_ID
-      });
 
-      const error = await service.addEarth(ctx, earth).catch((err) => err);
+      const error = await service.addEarth(ctx, earthProps).catch((err) => err);
 
-      expect(stub.calledOnce).to.equal(true);
-      expect(error).to.deep.eq({ code: ServiceCode.BAD_REQUEST });
+      expect(error).to.be.an.instanceOf(InvalidSurfZoneError);
     });
   });
 });

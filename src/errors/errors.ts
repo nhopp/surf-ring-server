@@ -3,3 +3,17 @@ export class InvalidSurfZoneError extends Error {
     super(`invalid SurfZone id : ${id}`);
   }
 }
+
+// tslint:disable-next-line: max-classes-per-file
+export class DuplicateEntryError extends Error {
+  constructor() {
+    super('entry already exist');
+  }
+}
+
+// tslint:disable-next-line: max-classes-per-file
+export class NotFoundError extends Error {
+  constructor(message?: string) {
+    super(message);
+  }
+}

@@ -6,7 +6,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import supertest = require('supertest');
 
 import { SurfZonesController } from '../../src/controllers/surfZonesController';
-import { SurfZoneRepositoryMongo } from '../../src/respository/surfZoneRepositoryMongo';
+import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { SurfZoneService } from '../../src/services/surfZoneService';
 import { MockLogger } from '../mocks/mockLogger';
 
@@ -21,7 +21,7 @@ describe('surfZonesController', () => {
     mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true });
     await mongoClient.connect();
     const mongoDb = mongoClient.db();
-    const repository = new SurfZoneRepositoryMongo(mongoDb);
+    const repository = new SurfZoneRepository(mongoDb);
     const service = new SurfZoneService(repository);
     const surfZonesController = new SurfZonesController(
       new MockLogger(),
@@ -44,7 +44,7 @@ describe('surfZonesController', () => {
         .post('/surf-zones')
         .send({ name: 'zone-name', zones: [], spots: [] })
         .set('Content-Type', 'application/json')
-        .expect(HttpStatus.OK);
+        .expect(HttpStatus.CREATED);
     });
 
     it('invalid child node id returns 409 - Conflict', () => {

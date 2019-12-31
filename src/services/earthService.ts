@@ -1,9 +1,8 @@
-import { RepositoryCode } from '../../tests/repositories/repositoryCodes';
 import { Context } from '../common/context';
+import { DuplicateEntryError } from '../errors/errors';
 import { SurfZone } from '../models/surfZone';
 import { SurfZoneProperties } from '../models/surfZoneProperties';
 import { EarthRepository } from '../respository/earthRepository';
-import { ServiceCode } from './serviceCodes';
 
 export class EarthService {
   private repository: EarthRepository;
@@ -13,11 +12,7 @@ export class EarthService {
   }
 
   public async getEarth(ctx: Context): Promise<SurfZone> {
-    try {
-      return await this.repository.getEarth(ctx);
-    } catch (error) {
-      return Promise.reject({ code: ServiceCode.NOT_FOUND });
-    }
+    return await this.repository.getEarth(ctx);
   }
 
   public async addEarth(
@@ -25,19 +20,12 @@ export class EarthService {
     properties: SurfZoneProperties
   ): Promise<SurfZone> {
     try {
-      return await this.repository.addEarth(ctx, properties);
+      await this.getEarth(ctx);
+      return Promise.reject(new DuplicateEntryError());
     } catch (error) {
-      let code = ServiceCode.INTERNAL_SERVER_ERROR;
-      switch (error.code) {
-        case RepositoryCode.DUPLICATE_ENTRY:
-          code = ServiceCode.BAD_REQUEST;
-          break;
-        case RepositoryCode.INVALID_ID:
-          code = ServiceCode.BAD_REQUEST;
-          break;
-      }
-
-      return Promise.reject({ code });
+      // no-op expect to not find an earth entry
     }
+
+    return await this.repository.addEarth(ctx, properties);
   }
 }

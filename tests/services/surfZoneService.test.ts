@@ -1,43 +1,49 @@
 import { expect } from 'chai';
-import * as Sinon from 'sinon';
+import { MongoClient } from 'mongodb';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 import { ContextImp } from '../../src/common/context';
 import { InvalidSurfZoneError } from '../../src/errors/errors';
 import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { SurfZoneService } from '../../src/services/surfZoneService';
 import { MockLogger } from '../mocks/mockLogger';
-import { MockSurfZoneRepository } from '../mocks/mockSurfZoneRepository';
 
 describe('SurfZoneService', () => {
   const ctx = new ContextImp(new MockLogger());
-  let repository: SurfZoneRepository;
   let service: SurfZoneService;
+  let mongoMem: MongoMemoryServer;
+  let mongoClient: MongoClient;
 
-  beforeEach(() => {
-    repository = new MockSurfZoneRepository();
-    service = new SurfZoneService(repository);
+  beforeEach(async () => {
+    mongoMem = new MongoMemoryServer();
+    const mongoUri = await mongoMem.getUri('db');
+    mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true });
+    await mongoClient.connect();
+    const mongoDb = mongoClient.db();
+    const surfZoneRepository = new SurfZoneRepository(mongoDb);
+    service = new SurfZoneService(surfZoneRepository);
+  });
+
+  afterEach(async () => {
+    await mongoClient.close();
+    await mongoMem.stop();
   });
 
   describe('getSurfZone', () => {
-    it('get with invalid id returns NOT_FOUND error', async () => {
-      const stub = Sinon.stub(repository, 'getSurfZone').resolves(undefined);
-
+    it('get with invalid id reject InvalidSurfZoneError', async () => {
       const surfZoneError = await service
         .getSurfZone(ctx, 'invalidKey')
         .catch((err) => err);
 
-      expect(stub.calledOnce).to.equal(true);
       expect(surfZoneError).to.be.an.instanceOf(InvalidSurfZoneError);
     });
 
     it('get with valid id returns surfZone', async () => {
-      const zoneId = 'valid_id';
-      const zone = { id: zoneId, name: '', zones: [], spots: [] };
-      const stub = Sinon.stub(repository, 'getSurfZone').resolves(zone);
+      const zoneProps = { name: '', zones: [], spots: [] };
+      const addedZone = await service.addSurfZone(ctx, zoneProps);
+      const surfZone = await service.getSurfZone(ctx, addedZone.id);
 
-      const surfZone = await service.getSurfZone(ctx, zoneId);
-      expect(stub.calledOnce).to.equal(true);
-      expect(surfZone).to.deep.eq(zone);
+      expect(addedZone).to.deep.eq(surfZone);
     });
   });
 });
