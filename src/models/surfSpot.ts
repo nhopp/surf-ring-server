@@ -1,10 +1,16 @@
-export class SurfSpot {
-  constructor(
-    public id: string,
-    public name: string,
-    public access: string,
-    public additionalInfo: string,
-    public latitude: string,
-    public longitude: string
-  ) {}
+import { SurfSpotProperties } from './surfSpotProperties';
+
+export class SurfSpot extends SurfSpotProperties {
+  public id: string;
+  constructor(id: string, properties: SurfSpotProperties) {
+    super(
+      properties.name,
+      properties.access,
+      properties.additionalInfo,
+      properties.latitude,
+      properties.longitude
+    );
+
+    this.id = id;
+  }
 }

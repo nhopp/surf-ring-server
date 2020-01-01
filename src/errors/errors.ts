@@ -5,6 +5,13 @@ export class InvalidSurfZoneError extends Error {
 }
 
 // tslint:disable-next-line: max-classes-per-file
+export class InvalidSurfSpotError extends Error {
+  constructor(id: string) {
+    super(`invalid SurfSpot id : ${id}`);
+  }
+}
+
+// tslint:disable-next-line: max-classes-per-file
 export class DuplicateEntryError extends Error {
   constructor() {
     super('entry already exist');

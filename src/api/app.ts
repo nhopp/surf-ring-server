@@ -4,7 +4,7 @@ import * as morgan from 'morgan';
 
 import { Controller } from '../controllers/controller';
 
-class App {
+export class App {
   public app: express.Application;
   public port: number;
 
@@ -31,5 +31,3 @@ class App {
     });
   }
 }
-
-export default App;

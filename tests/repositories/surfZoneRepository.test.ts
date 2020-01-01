@@ -9,7 +9,7 @@ import { SurfZoneProperties } from '../../src/models/surfZoneProperties';
 import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { MockLogger } from '../mocks/mockLogger';
 
-describe('SurfZoneRepositoryMongo', async () => {
+describe('SurfZoneRepository', async () => {
   const ctx = new ContextImp(new MockLogger());
   let mongoMem: MongoMemoryServer;
   let mongoClient: MongoClient;
