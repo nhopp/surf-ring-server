@@ -1,3 +1,4 @@
 .git
 dist
+config/local.json
 node_modules

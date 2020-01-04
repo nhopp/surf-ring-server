@@ -1,0 +1,8 @@
+{
+  "mongo": {
+    "uri": "mongodb://localhost:27017/surf-ring"
+  },
+  "app": {
+    "port": 8081
+  }
+}

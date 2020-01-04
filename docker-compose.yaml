@@ -10,6 +10,9 @@ services:
       - .:/app
     links:
       - mongo
+    environment:
+      - NODE_ENV=docker
+
   mongo:
     container_name: mongo
     image: mongo

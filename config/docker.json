@@ -1,0 +1,8 @@
+{
+  "mongo": {
+    "uri": "mongodb://mongo:27017/expressmongo"
+  },
+  "app": {
+    "port": 8080
+  }
+}

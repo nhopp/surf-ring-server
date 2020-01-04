@@ -13,5 +13,5 @@ ADD . /usr/src/app
 # RUN npm run tsc
 # Start
 # CMD [ "npm", "start" ]
-CMD [ "npm", "run", "dev" ]
+CMD [ "npm", "run", "start" ]
 EXPOSE 8080

@@ -1,3 +1,4 @@
+import * as config from 'config';
 import { MongoClient } from 'mongodb';
 
 import { LoggerConsole } from '../common/loggerConsole';
@@ -9,19 +10,19 @@ import { EarthService } from '../services/earthService';
 import { SurfZoneService } from '../services/surfZoneService';
 import { App } from './app';
 
-const mongoUrl = 'mongodb://mongo:27017/expressmongo';
-// const mongoUrl = 'mongodb://localhost:27017/surf-ring';
-const dbName = 'surfSpots';
+console.log(`------------env: ${process.env.NODE_ENV}`);
+const mongoUri = config.get<string>('mongo.uri');
+const appPort = config.get<number>('app.port');
 
-const mongoClient = new MongoClient(mongoUrl, { useUnifiedTopology: true });
+const mongoClient = new MongoClient(mongoUri, { useUnifiedTopology: true });
 
 const logger = new LoggerConsole();
-logger.info(`connecting to mongo: ${mongoUrl}`);
+logger.info(`connecting to mongo: ${mongoUri}`);
 mongoClient
   .connect()
   .then(() => {
-    logger.info(`connecting to mongo: ${mongoUrl}`);
-    const mongoDb = mongoClient.db(dbName);
+    logger.info(`connected to mongo: ${mongoUri}`);
+    const mongoDb = mongoClient.db();
     const surfZoneRepository = new SurfZoneRepository(mongoDb);
     const surfZoneService = new SurfZoneService(surfZoneRepository);
     const surfZonesController = new SurfZonesController(
@@ -31,12 +32,12 @@ mongoClient
     const earthRepository = new EarthRepository(mongoDb, surfZoneRepository);
     const earthService = new EarthService(earthRepository);
     const earthController = new EarthController(logger, earthService);
-    const app = new App([earthController, surfZonesController], 8080);
+    const app = new App([earthController, surfZonesController], appPort);
 
     app.listen();
   })
   .catch((err) => {
     if (err) {
-      logger.error(`failed to connect to ${mongoUrl} - ${err}`);
+      logger.error(`failed to connect to ${mongoUri} - ${err}`);
     }
   });
