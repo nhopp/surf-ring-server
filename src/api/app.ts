@@ -1,4 +1,3 @@
-import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as morgan from 'morgan';
 
@@ -12,10 +11,9 @@ export class App {
     this.app = express();
     this.port = port;
 
-    const logger = morgan('tiny');
+    const logger = morgan('dev');
     this.app.use(logger);
-    this.app.use(bodyParser.json());
-    this.app.use(bodyParser.urlencoded({ extended: true }));
+    this.app.use(express.json());
     this.initializeControllers(controllers);
   }
 
