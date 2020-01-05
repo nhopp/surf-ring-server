@@ -1,4 +1,3 @@
-import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as faker from 'faker';
 import * as HttpStatus from 'http-status-codes';
@@ -33,8 +32,8 @@ describe('surfSpotsController', () => {
       service
     );
     app = express();
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
     app.use(surfSpotsController.router);
   });
 

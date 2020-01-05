@@ -1,4 +1,3 @@
-import * as bodyParser from 'body-parser';
 import * as express from 'express';
 import * as HttpStatus from 'http-status-codes';
 import { MongoClient } from 'mongodb';
@@ -28,8 +27,8 @@ describe('surfZonesController', () => {
       service
     );
     app = express();
-    app.use(bodyParser.json());
-    app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
     app.use(surfZonesController.router);
   });
 
