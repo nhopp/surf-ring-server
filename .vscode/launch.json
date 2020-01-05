@@ -49,6 +49,17 @@
       "console": "integratedTerminal"
     },
     {
+      "name": "DB Init",
+      "type": "node",
+      "request": "launch",
+      "args": ["${workspaceRoot}/src/tools/initializeDB/initializeDb.ts"],
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+      "sourceMaps": true,
+      "cwd": "${workspaceRoot}",
+      "protocol": "inspector",
+      "console": "integratedTerminal"
+    },
+    {
       "type": "node",
       "request": "attach",
       "name": "Docker: Attach to Node",

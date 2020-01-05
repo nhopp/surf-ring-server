@@ -4,5 +4,6 @@
   },
   "app": {
     "port": 8081
-  }
+  },
+  "surfRingUrl": "http://localhost:8080/api/v1"
 }
