@@ -4,16 +4,26 @@ import * as HttpStatus from 'http-status-codes';
 import { ContextImp } from '../common/context';
 import { Logger } from '../common/logger';
 import { InvalidSurfZoneError } from '../errors/errors';
+import { AdminAuthorizer } from '../middleware/adminAuthorizer';
 import { SurfZoneService } from '../services/surfZoneService';
 import { Controller } from './controller';
 
+export interface SurfZonesControllerArgs {
+  surfZoneService: SurfZoneService;
+  adminAuthorizer: AdminAuthorizer;
+}
+
 export class SurfZonesController implements Controller {
+  private logger: Logger;
+  private surfZoneService: SurfZoneService;
   public readonly router = express.Router();
 
-  constructor(
-    private logger: Logger,
-    private surfZoneService: SurfZoneService
-  ) {
+  constructor(logger: Logger, args: SurfZonesControllerArgs) {
+    this.logger = logger;
+    this.surfZoneService = args.surfZoneService;
+
+    this.router.use(args.adminAuthorizer.middleware.bind(args.adminAuthorizer));
+
     this.router.get('/surf-zones/:id', this.getSurfZone.bind(this));
     this.router.post('/surf-zones', this.postSurfZone.bind(this));
   }

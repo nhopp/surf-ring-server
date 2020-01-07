@@ -4,13 +4,27 @@ import * as HttpStatus from 'http-status-codes';
 import { ContextImp } from '../common/context';
 import { Logger } from '../common/logger';
 import { DuplicateEntryError, InvalidSurfZoneError, NotFoundError } from '../errors/errors';
+import { AdminAuthorizer } from '../middleware/adminAuthorizer';
 import { EarthService } from '../services/earthService';
 import { Controller } from './controller';
 
+export interface EarthControllerArgs {
+  earthService: EarthService;
+  adminAuthorizer: AdminAuthorizer;
+}
+
 export class EarthController implements Controller {
+  private logger: Logger;
+  private earthService: EarthService;
+
   public readonly router = express.Router();
 
-  constructor(private logger: Logger, private earthService: EarthService) {
+  constructor(logger: Logger, args: EarthControllerArgs) {
+    this.logger = logger;
+    this.earthService = args.earthService;
+
+    this.router.use(args.adminAuthorizer.middleware.bind(args.adminAuthorizer));
+
     this.router.get('/earth', this.getEarth.bind(this));
     this.router.post('/earth', this.postEarth.bind(this));
   }

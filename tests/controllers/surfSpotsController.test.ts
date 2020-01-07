@@ -7,6 +7,7 @@ import * as sinon from 'sinon';
 import supertest = require('supertest');
 
 import { SurfSpotsController } from '../../src/controllers/surfSpotsController';
+import { AdminAuthorizer } from '../../src/middleware/adminAuthorizer';
 import { SurfSpot } from '../../src/models/surfSpot';
 import { SurfSpotProperties } from '../../src/models/surfSpotProperties';
 import { SurfSpotRepository } from '../../src/respository/surfSpotRepository';
@@ -14,10 +15,12 @@ import { SurfSpotService } from '../../src/services/surfSpotService';
 import { MockLogger } from '../mocks/mockLogger';
 
 describe('surfSpotsController', () => {
+  const adminToken = 'admin_token';
+  const adminAuthorizer = new AdminAuthorizer(adminToken);
   let app: express.Application;
   let mongoMem: MongoMemoryServer;
   let mongoClient: MongoClient;
-  let service: SurfSpotService;
+  let surfSpotService: SurfSpotService;
 
   before(async () => {
     mongoMem = new MongoMemoryServer();
@@ -26,10 +29,11 @@ describe('surfSpotsController', () => {
     await mongoClient.connect();
     const mongoDb = mongoClient.db();
     const repository = new SurfSpotRepository(mongoDb);
-    service = new SurfSpotService(repository);
+    surfSpotService = new SurfSpotService(repository);
+    const surfSpotsControllerArgs = { surfSpotService, adminAuthorizer };
     const surfSpotsController = new SurfSpotsController(
       new MockLogger(),
-      service
+      surfSpotsControllerArgs
     );
     app = express();
     app.use(express.json());
@@ -48,22 +52,30 @@ describe('surfSpotsController', () => {
         .post('/surf-spots')
         .send(createSurfSpotProperties())
         .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(HttpStatus.CREATED);
     });
   });
 
   describe('GET /surf-spots/:id', () => {
+    it('missing authorization header returns 401', async () => {
+      await supertest(app)
+        .get('/surf-spots/invalidKey')
+        .expect(HttpStatus.UNAUTHORIZED);
+    });
     it('invalid id returns 404', async () => {
       await supertest(app)
         .get('/surf-spots/invalidKey')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
     it('happyPath', async () => {
       const properties = createSurfSpotProperties();
       const surfSpot = new SurfSpot('valid_id', properties);
-      sinon.stub(service, 'getSurfSpot').resolves(surfSpot);
+      sinon.stub(surfSpotService, 'getSurfSpot').resolves(surfSpot);
       await supertest(app)
         .get(`/surf-spots/${surfSpot.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(HttpStatus.OK);
       sinon.reset();
     });

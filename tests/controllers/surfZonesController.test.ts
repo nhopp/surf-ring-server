@@ -5,11 +5,14 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import supertest = require('supertest');
 
 import { SurfZonesController } from '../../src/controllers/surfZonesController';
+import { AdminAuthorizer } from '../../src/middleware/adminAuthorizer';
 import { SurfZoneRepository } from '../../src/respository/surfZoneRepository';
 import { SurfZoneService } from '../../src/services/surfZoneService';
 import { MockLogger } from '../mocks/mockLogger';
 
 describe('surfZonesController', () => {
+  const adminToken = 'admin_token';
+  const adminAuthorizer = new AdminAuthorizer(adminToken);
   let app: express.Application;
   let mongoMem: MongoMemoryServer;
   let mongoClient: MongoClient;
@@ -21,10 +24,11 @@ describe('surfZonesController', () => {
     await mongoClient.connect();
     const mongoDb = mongoClient.db();
     const repository = new SurfZoneRepository(mongoDb);
-    const service = new SurfZoneService(repository);
+    const surfZoneService = new SurfZoneService(repository);
+    const surfZoneControllerArgs = { surfZoneService, adminAuthorizer };
     const surfZonesController = new SurfZonesController(
       new MockLogger(),
-      service
+      surfZoneControllerArgs
     );
     app = express();
     app.use(express.json());
@@ -43,6 +47,7 @@ describe('surfZonesController', () => {
         .post('/surf-zones')
         .send({ name: 'zone-name', zones: [], spots: [] })
         .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(HttpStatus.CREATED);
     });
 
@@ -51,7 +56,16 @@ describe('surfZonesController', () => {
         .post('/surf-zones')
         .send({ name: 'zone-name', zones: ['invalid_id'], spots: [] })
         .set('Content-Type', 'application/json')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(HttpStatus.CONFLICT);
+    });
+
+    it('invalid child node id returns 409 - Conflict', () => {
+      return supertest(app)
+        .post('/surf-zones')
+        .send({ name: 'zone-name', zones: [], spots: [] })
+        .set('Content-Type', 'application/json')
+        .expect(HttpStatus.UNAUTHORIZED);
     });
   });
 
@@ -59,6 +73,7 @@ describe('surfZonesController', () => {
     it('invalid id returns 404', () => {
       return supertest(app)
         .get('/surf-zones/invalidKey')
+        .set('Authorization', `Bearer ${adminToken}`)
         .expect(HttpStatus.NOT_FOUND);
     });
   });
