@@ -32,13 +32,18 @@ mongoClient
     const mongoDb = mongoClient.db();
     const surfSpotRepository = new SurfSpotRepository(mongoDb);
     const surfSpotService = new SurfSpotService(surfSpotRepository);
-    const surfSpotController = new SurfSpotsController(logger, surfSpotService);
+    const surfSpotControllerArgs = { surfSpotService, adminAuthorizer };
+    const surfSpotController = new SurfSpotsController(
+      logger,
+      surfSpotControllerArgs
+    );
 
     const surfZoneRepository = new SurfZoneRepository(mongoDb);
     const surfZoneService = new SurfZoneService(surfZoneRepository);
+    const surfZonesControllerArgs = { surfZoneService, adminAuthorizer };
     const surfZonesController = new SurfZonesController(
       logger,
-      surfZoneService
+      surfZonesControllerArgs
     );
     const earthRepository = new EarthRepository(mongoDb, surfZoneRepository);
     const earthService = new EarthService(earthRepository);
