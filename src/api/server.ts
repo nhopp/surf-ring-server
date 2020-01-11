@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 
 import { LoggerConsole } from '../common/loggerConsole';
 import { EarthController } from '../controllers/earthController';
+import { HealthController } from '../controllers/healthController';
 import { SurfSpotsController } from '../controllers/surfSpotsController';
 import { SurfZonesController } from '../controllers/surfZonesController';
 import { AdminAuthorizer } from '../middleware/adminAuthorizer';
@@ -49,8 +50,15 @@ mongoClient
     const earthService = new EarthService(earthRepository);
     const earthControlerArgs = { earthService, adminAuthorizer };
     const earthController = new EarthController(logger, earthControlerArgs);
+
+    const healthController = new HealthController();
     const app = new App(
-      [earthController, surfZonesController, surfSpotController],
+      [
+        earthController,
+        surfZonesController,
+        surfSpotController,
+        healthController
+      ],
       appPort
     );
 

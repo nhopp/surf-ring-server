@@ -9,6 +9,8 @@ COPY package-lock.json .
 RUN npm install
 # Copy all other source code to work directory
 ADD . /usr/src/app
+
+ENV NODE_ENV=docker
 # TypeScript
 # RUN npm run tsc
 # Start
