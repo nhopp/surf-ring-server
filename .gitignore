@@ -1,7 +1,7 @@
-
-coverage
 data
 dist
+config
+coverage
 node_modules
 .nyc_output
 .DS_Store
